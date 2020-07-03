@@ -1,0 +1,31 @@
+{
+  "name": "mesa-viz",
+  "homepage": "https://github.com/corvince/mesa_viz",
+  "repository": {
+    "url": "https://github.com/corvince/mesa_viz",
+    "type": "git"
+  },
+  "scripts": {
+    "dev": "parcel watch ./src/frontend/index_template.html --no-content-hash --public-url /src/mesa_viz/ --dist-dir ./src/mesa_viz/",
+    "build": "parcel build ./src/frontend/index_template.html --no-content-hash --public-url /src/mesa_viz/ --dist-dir ./src/mesa_viz/"
+  },
+  "dependencies": {
+    "@material/dom": "^7.0.0",
+    "@material/mwc-button": "^0.15.0",
+    "@material/mwc-slider": "^0.15.0",
+    "hybrids": "^4.2.1",
+    "tslib": "^2.0.0",
+    "vega": "^5.13.0",
+    "vega-embed": "^6.9.0",
+    "vega-lite": "^4.13.1",
+    "vega-util": "^1.14.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.0.0",
+    "parcel": "^2.0.0-beta.1"
+  },
+  "description": "",
+  "version": "0.1.0",
+  "author": "",
+  "license": "Apache-2.0"
+}
