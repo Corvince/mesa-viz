@@ -15,10 +15,15 @@ multiple simulations side-by-side. All simulations are interactive and you can i
 a "on_click" method in your model class to respond to clicks. Every click passes the
 underlying visualization data to your "on-click" function.
 """
+import asyncio
+
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 import copy
 import os
 import pickle
 import webbrowser
+import json
 
 from typing import Dict, Optional, List, Awaitable, Any, Union, TYPE_CHECKING
 
@@ -30,10 +35,40 @@ import tornado.web
 import tornado.websocket
 
 from .UserParam import UserSettableParameter
+from .VegaSpec import VegaChart
 
 
 if TYPE_CHECKING:
     from mesa.model import Model
+
+
+def get_properties(obj):
+    return {
+        key: getattr(obj, key)
+        for key, value in obj.__class__.__dict__.items()
+        if type(value) == property
+    }
+
+
+def as_json(model: "Model"):
+
+    model_has_dict = getattr(model, "as_dict", None)
+    if model_has_dict:
+        model_data = model.as_dict()
+    else:
+        model_data = {**model.__dict__, **get_properties(model)}
+
+    agent_has_dict = getattr(model.schedule.agents[0], "as_dict", None)
+    if agent_has_dict:
+        agent_data = [agent.as_dict() for agent in model.schedule.agents]
+    else:
+        agent_data = [
+            {**agent.__dict__, **get_properties(agent)}
+            for agent in model.schedule.agents
+        ]
+
+    model_data.update({"agents": agent_data})
+    return json.dumps(model_data, default=lambda a: str(a))
 
 
 class PageHandler(tornado.web.RequestHandler):
@@ -88,7 +123,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         return tornado.escape.json_encode(
             {
                 "type": "model_state",
-                "data": [model.as_json() for model in self.application.models],
+                "data": [as_json(model) for model in self.application.models],
                 "step": step,
             }
         )
@@ -170,7 +205,7 @@ class VegaServer(tornado.web.Application):
     static_handler = (
         r"/(.*)",
         tornado.web.StaticFileHandler,
-        {"path": "../../"},
+        {"path": os.path.dirname(os.path.dirname(os.path.dirname(__file__)))},
     )
 
     handlers = [page_handler, socket_handler, static_handler]
@@ -191,8 +226,6 @@ class VegaServer(tornado.web.Application):
         n_simulations: int = 1,
     ):
         """ Create a new visualization server with the given elements. """
-        # Prep visualization elements:
-        self.vega_specifications = vega_specifications
 
         # Initializing the model
         self.model_name = name
@@ -214,6 +247,14 @@ class VegaServer(tornado.web.Application):
             copy.deepcopy(self.model_params) for _ in range(n_simulations)
         ]
         self.reset_models()
+
+        # Prep visualization elements:
+        self.vega_specifications = []
+        for spec in vega_specifications:
+            if isinstance(spec, VegaChart):
+                self.vega_specifications.append(spec.create_spec(self.models[0]))
+            else:
+                self.vega_specifications.append(spec)
 
         # Initializing the application itself:
         super().__init__(self.handlers, "", [], **self.settings)

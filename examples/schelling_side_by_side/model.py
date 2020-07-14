@@ -35,8 +35,8 @@ class SchellingAgent(Agent):
         else:
             self.model.happy += 1
 
-    def as_json(self):
-        return json.dumps({"x": self.pos[0], "y": self.pos[1], "agent_type": self.type})
+    def as_dict(self):
+        return {"x": self.pos[0], "y": self.pos[1], "agent_type": self.type}
 
 
 class Schelling(Model):
