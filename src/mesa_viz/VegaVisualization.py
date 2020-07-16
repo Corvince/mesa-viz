@@ -17,7 +17,7 @@ underlying visualization data to your "on-click" function.
 """
 import asyncio
 
-asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # noqa
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 import copy
 import os
