@@ -1,4 +1,8 @@
-from mesa import Agent
+from mesa import Agent, Model
+from mesa.space import SingleGrid
+from mesa.time import BaseScheduler
+from mesa_viz.VegaSpec import GridChart
+from mesa_viz.VegaVisualization import VegaServer
 
 
 class Turtle(Agent):
@@ -9,7 +13,7 @@ class Turtle(Agent):
         dx, dy = direction
         try:
             self.model.grid.move_agent(self, (x + dx, y + dy))
-        except:
+        except Exception:
             return
         self.spawn(x, y)
 
@@ -26,11 +30,6 @@ class Turtle(Agent):
         trail.active = False
         self.model.schedule.add(trail)
         self.model.grid.position_agent(trail, x, y)
-
-
-from mesa import Model
-from mesa.space import SingleGrid
-from mesa.time import BaseScheduler
 
 
 class TurtleModel(Model):
@@ -70,11 +69,8 @@ class TurtleModel(Model):
                 self.active_agent.active = True
 
 
-from mesa_viz.VegaSpec import GridChart
-
 grid = GridChart(color="active")
 
-from mesa_viz.VegaVisualization import VegaServer
 
 server = VegaServer(TurtleModel, [grid], "Turtles", {}, n_simulations=3)
 # server.launch()

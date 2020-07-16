@@ -53,7 +53,7 @@ class UserSettableParameter:
         min_value=None,
         max_value=None,
         step=1,
-        choices=list(),
+        choices=None,
         description=None,
     ):
         if param_type not in self.TYPES:
@@ -64,7 +64,7 @@ class UserSettableParameter:
         self.min_value = min_value
         self.max_value = max_value
         self.step = step
-        self.choices = choices
+        self.choices = choices if choices else list()
         self.description = description
 
         # Validate option types to make sure values are supplied properly

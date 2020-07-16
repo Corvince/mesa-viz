@@ -1,7 +1,4 @@
-import json
-
-from mesa import Model, Agent
-from mesa import time
+from mesa import Agent, Model, time
 from mesa.space import SingleGrid
 
 

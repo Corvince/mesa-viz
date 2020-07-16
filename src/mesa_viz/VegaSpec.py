@@ -1,6 +1,6 @@
-import altair as alt
-from typing import TYPE_CHECKING
 from dataclasses import dataclass
+
+import altair as alt
 
 from mesa.model import Model
 

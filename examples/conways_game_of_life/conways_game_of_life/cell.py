@@ -1,5 +1,3 @@
-import json
-
 from mesa import Agent
 
 
@@ -53,6 +51,3 @@ class Cell(Agent):
         Set the state to the new computed state -- computed in step().
         """
         self.state = self._nextState
-
-    def as_json(self):
-        return json.dumps({"isAlive": self.isAlive, "x": self.pos[0], "y": self.pos[1]})

@@ -17,7 +17,7 @@ underlying visualization data to your "on-click" function.
 """
 import asyncio
 
-asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # noqa
 
 import copy
 import os
@@ -169,8 +169,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
 
         model = self.application.models[model_id]
         try:
-            method = getattr(model, "on_click")
-            method(**data)
+            model.on_click(**data)
         except (AttributeError, TypeError):
             pass
 
@@ -183,8 +182,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
 
         model = self.application.models[model_id]
         try:
-            method = getattr(model, "on_key")
-            method(**data)
+            model.on_key(**data)
         except (AttributeError, TypeError):
             pass
 
@@ -264,12 +262,8 @@ class VegaServer(tornado.web.Application):
         result = []
         for param, val in self.model_params.items():
             if isinstance(val, UserSettableParameter):
-                setattr(val, "parameter", param)
-                setattr(
-                    val,
-                    "model_values",
-                    [kwargs[param].value for kwargs in self.model_kwargs],
-                )
+                val.parameter = param
+                val.model_values = [kwargs[param].value for kwargs in self.model_kwargs]
                 result.append(val.json)
         return result
 
