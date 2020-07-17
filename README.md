@@ -37,8 +37,18 @@ class Turtle(Agent):
         dx, dy = direction
         try:
             self.model.grid.move_agent(self, (x + dx, y + dy))
-        except:
+        except Exception:
             return
+
+    # We need x and y attributes for the visualization
+    # future versions will special-case `pos` to do this automatically
+    @property
+    def x(self):
+        return self.pos[0]
+
+    @property
+    def y(self):
+        return self.pos[1]
 
 
 class TurtleModel(Model):
