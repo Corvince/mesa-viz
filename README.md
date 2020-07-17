@@ -100,7 +100,7 @@ To see the specifications we could call `grid_spec.create_spec(TurtleModel())` d
       "scale": { "domain": [4, 3, 2, 1, 0] },
       "type": "nominal"
     },
-    "color": { "field": "active", "type": "nominal" }
+    "color": { "field": "unique_id", "type": "nominal" }
   },
   "config": {
     "axis": { "grid": true, "tickBand": "extent" }
