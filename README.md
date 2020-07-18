@@ -13,7 +13,7 @@ This package uses flit for developing and publishing. To install a development v
 ```bash
   pip install flit
   git clone https://github.com/corvince/mesa_viz
-  cd mesa_viz
+  cd mesa_viz/src/
   flit install -s
 ```
 
