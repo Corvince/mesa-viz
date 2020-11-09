@@ -1,3 +1,3 @@
 from server import server
 
-server.launch(port=3456)
+server.launch()
