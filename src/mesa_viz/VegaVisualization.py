@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 VegaServer
 =============
@@ -16,16 +15,12 @@ a "on_click" method in your model class to respond to clicks. Every click passes
 underlying visualization data to your "on-click" function.
 """
 import asyncio
-
-asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
 import copy
+import json
 import os
 import pickle
 import webbrowser
-import json
-
-from typing import Dict, Optional, List, Awaitable, Any, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Awaitable, Dict, List, Optional, Union
 
 import tornado.autoreload
 import tornado.escape
@@ -37,9 +32,10 @@ import tornado.websocket
 from .UserParam import UserSettableParameter
 from .VegaSpec import VegaChart
 
-
 if TYPE_CHECKING:
     from mesa.model import Model
+
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 def get_properties(obj):
@@ -76,7 +72,7 @@ class PageHandler(tornado.web.RequestHandler):
 
     application: "VegaServer"
 
-    def get(self) -> None:
+    def get(self, *args: Any) -> None:
         self.render(
             "index_template.html",
             port=self.application.port,
@@ -85,15 +81,137 @@ class PageHandler(tornado.web.RequestHandler):
         )
 
 
+class ModelRunner:
+    current_step = 0
+    models: List["Model"] = []
+
+    def __init__(self, application: "VegaServer", socket_handler: "SocketHandler"):
+        self.application = application
+        self.socket_handler = socket_handler
+        self.reset_models()
+
+    def current_state(self, step: int) -> str:
+        return tornado.escape.json_encode(
+            {
+                "type": "model_state",
+                "data": [as_json(model) for model in self.models],
+                "step": step,
+            }
+        )
+
+    def get_state(self, step: int) -> None:
+        self.socket_handler.write_message(self.states[step])
+
+    def submit_params(self, model: int, param: str, value: Any) -> None:
+        """Submit model parameters."""
+
+        # Is the param editable?
+        self.application.model_kwargs[model][param].value = value
+
+    async def reset(self) -> None:
+        self.reset_models()
+        self.states = []
+        self.socket_handler.write_message(
+            {"type": "model_params", "params": self.user_params}
+        )
+        self.current_step = 0
+        await self.step(0)
+
+    async def step(self, step: int) -> None:
+        if step < self.current_step:
+            self.restore_state(max(step - 1, 0))
+
+        elif step > self.current_step:
+            self.step_ahead()
+
+        state = self.current_state(step)
+        self.states.append(state)
+        self.socket_handler.write_message(state)
+
+        if not any([model.running for model in self.models]):
+            self.socket_handler.write_message({"type": "end"})
+        else:
+            self.step_ahead()
+            self.current_step = step + 1
+
+    async def call_method(self, model_id: int, data: Dict[str, Any]) -> None:
+        self.current_step -= 1
+        self.restore_state(self.current_step)
+        self.states = self.states[: self.current_step]
+
+        model = self.models[model_id]
+        try:
+            model.on_click(**data)
+        except (AttributeError, TypeError):
+            pass
+
+        await self.step(self.current_step)
+
+    async def key_press(self, model_id: int, data: Dict[str, Any]) -> None:
+        self.current_step -= 1
+        self.restore_state(self.current_step)
+        self.states = self.states[: self.current_step]
+
+        model = self.models[model_id]
+        try:
+            model.on_key(**data)
+        except (AttributeError, TypeError):
+            pass
+
+        await self.step(self.current_step)
+
+    @property
+    def user_params(self) -> List[Dict[str, Any]]:
+        result = []
+        for param, val in self.application.model_params.items():
+            if isinstance(val, UserSettableParameter):
+                val.parameter = param
+                val.model_values = [
+                    kwargs[param].value for kwargs in self.application.model_kwargs
+                ]
+                result.append(val.json)
+        return result
+
+    def step_ahead(self) -> None:
+        """Advance all models by one step."""
+        self.pickles[self.current_step] = pickle.dumps(self.models)
+        for model in self.models:
+            model.step()
+        self.current_step += 1
+
+    def restore_state(self, step: int) -> None:
+        self.models = pickle.loads(self.pickles[step])
+        self.current_step = step
+
+    def reset_models(self) -> None:
+        """ Reinstantiate the model object, using the current parameters. """
+
+        self.models = []
+        self.pickles = {}
+        for i in range(self.application.n_simulations):
+            model_params = {}
+            for key, val in self.application.model_kwargs[i].items():
+                if isinstance(val, UserSettableParameter):
+                    if (
+                        val.param_type == "static_text"
+                    ):  # static_text is never used for setting params
+                        continue
+                    model_params[key] = val.value
+                else:
+                    model_params[key] = val
+            self.models.append(self.application.model_cls(**model_params))
+            self.current_step = 0
+
+
 class SocketHandler(tornado.websocket.WebSocketHandler):
     application: "VegaServer"
-    current_step = 0
 
     def open(self, *args: str, **kwargs: str) -> Optional[Awaitable[None]]:
         self.set_nodelay(True)
         # self.states: List[str] = []
         if self.application.verbose:
             print("Socket opened!")
+        self.model_runner = ModelRunner(self.application, self)
 
         self.write_message(
             {
@@ -104,89 +222,19 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
         )
         return None
 
-    def on_message(self, message: Union[str, bytes]) -> Optional[Awaitable[None]]:
-        """ Receiving a message from the websocket, parse, and act accordingly.
-
-        """
+    async def on_message(self, message: Union[str, bytes]) -> Optional[Awaitable[None]]:
+        """Receiving a message from the websocket, parse, and act accordingly."""
         msg = tornado.escape.json_decode(message)
         if self.application.verbose:
             print(msg)
 
-        response_function = getattr(self, msg["type"], None)
+        response_function = getattr(self.model_runner, msg["type"], None)
 
         if response_function:
-            response_function(**msg["data"])
+            loop = asyncio.get_event_loop()
+            loop.create_task(response_function(**msg["data"]))
         elif self.application.verbose:
             print("Unexpected message!")
-
-    def current_state(self, step: int) -> str:
-        return tornado.escape.json_encode(
-            {
-                "type": "model_state",
-                "data": [as_json(model) for model in self.application.models],
-                "step": step,
-            }
-        )
-
-    def get_state(self, step: int) -> None:
-        self.write_message(self.states[step])
-
-    def submit_params(self, model: int, param: str, value: Any) -> None:
-        """Submit model parameters."""
-
-        # Is the param editable?
-        self.application.model_kwargs[model][param].value = value
-
-    def reset(self) -> None:
-        self.application.reset_models()
-        self.states = []
-        self.write_message(
-            {"type": "model_params", "params": self.application.user_params}
-        )
-        self.current_step = 0
-        self.step(0)
-
-    def step(self, step: int) -> None:
-        if step < self.current_step:
-            self.application.restore_state(max(step - 1, 0))
-
-        elif step > self.current_step:
-            self.application.step()
-
-        state = self.current_state(step)
-        self.states.append(state)
-        self.write_message(state)
-
-        if not any([model.running for model in self.application.models]):
-            self.write_message({"type": "end"})
-        self.application.step()
-        self.current_step = step + 1
-
-    def call_method(self, model_id: int, data: Dict[str, Any]) -> None:
-        self.current_step -= 1
-        self.application.restore_state(self.current_step)
-        self.states = self.states[: self.current_step]
-
-        model = self.application.models[model_id]
-        try:
-            model.on_click(**data)
-        except (AttributeError, TypeError):
-            pass
-
-        self.step(self.current_step)
-
-    def key_press(self, model_id: int, data: Dict[str, Any]) -> None:
-        self.current_step -= 1
-        self.application.restore_state(self.current_step)
-        self.states = self.states[: self.current_step]
-
-        model = self.application.models[model_id]
-        try:
-            model.on_key(**data)
-        except (AttributeError, TypeError):
-            pass
-
-        self.step(self.current_step)
 
 
 class VegaServer(tornado.web.Application):
@@ -218,7 +266,7 @@ class VegaServer(tornado.web.Application):
     def __init__(
         self,
         model_cls: Any,
-        vega_specifications: List[str],
+        vega_specifications: List[Union[str, VegaChart]],
         name: str = "Mesa Model",
         model_params: Optional[Dict[str, Any]] = None,
         n_simulations: int = 1,
@@ -244,59 +292,19 @@ class VegaServer(tornado.web.Application):
         self.model_kwargs = [
             copy.deepcopy(self.model_params) for _ in range(n_simulations)
         ]
-        self.reset_models()
 
         # Prep visualization elements:
-        self.vega_specifications = []
+        self.vega_specifications = vega_specifications
         for spec in vega_specifications:
             if isinstance(spec, VegaChart):
-                self.vega_specifications.append(spec.create_spec(self.models[0]))
+                self.vega_specifications.append(
+                    spec.create_spec(model_cls(**model_params))
+                )
             else:
                 self.vega_specifications.append(spec)
 
         # Initializing the application itself:
         super().__init__(self.handlers, "", [], **self.settings)
-
-    @property
-    def user_params(self) -> List[Dict[str, Any]]:
-        result = []
-        for param, val in self.model_params.items():
-            if isinstance(val, UserSettableParameter):
-                val.parameter = param
-                val.model_values = [kwargs[param].value for kwargs in self.model_kwargs]
-                result.append(val.json)
-        return result
-
-    def step(self) -> None:
-        """Advance all models by one step.
-        """
-        self.pickles[self.current_step] = pickle.dumps(self.models)
-        for model in self.models:
-            model.step()
-        self.current_step += 1
-
-    def restore_state(self, step: int) -> None:
-        self.models = pickle.loads(self.pickles[step])
-        self.current_step = step
-
-    def reset_models(self) -> None:
-        """ Reinstantiate the model object, using the current parameters. """
-
-        self.models = []
-        self.pickles = {}
-        for i in range(self.n_simulations):
-            model_params = {}
-            for key, val in self.model_kwargs[i].items():
-                if isinstance(val, UserSettableParameter):
-                    if (
-                        val.param_type == "static_text"
-                    ):  # static_text is never used for setting params
-                        continue
-                    model_params[key] = val.value
-                else:
-                    model_params[key] = val
-            self.models.append(self.model_cls(**model_params))
-            self.current_step = 0
 
     def launch(self, port: Optional[int] = None) -> None:
         """ Run the app. """
