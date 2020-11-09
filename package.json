@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
-    "parcel": "^2.0.0-beta.1"
+    "parcel": "^2.0.0-nightly.442"
   },
   "description": "",
   "version": "0.1.0",
