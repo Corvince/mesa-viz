@@ -296,7 +296,7 @@ class VegaServer(tornado.web.Application):
         ]
 
         # Prep visualization elements:
-        self.vega_specifications = vega_specifications
+        self.vega_specifications = []
         for spec in vega_specifications:
             if isinstance(spec, VegaChart):
                 self.vega_specifications.append(
