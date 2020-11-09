@@ -16,6 +16,7 @@ underlying visualization data to your "on-click" function.
 """
 import asyncio
 import copy
+import sys
 import json
 import os
 import pickle
@@ -35,7 +36,8 @@ from .VegaSpec import VegaChart
 if TYPE_CHECKING:
     from mesa.model import Model
 
-asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 def get_properties(obj):
