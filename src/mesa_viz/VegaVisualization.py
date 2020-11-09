@@ -308,8 +308,7 @@ class VegaServer(tornado.web.Application):
 
     def launch(self, port: Optional[int] = None) -> None:
         """ Run the app. """
-        if port is not None:
-            self.port = port
+        self.port = int(os.getenv("PORT", 3000))
         url = "http://127.0.0.1:{PORT}".format(PORT=self.port)
         print("Interface starting at {url}".format(url=url))
         self.listen(self.port)
