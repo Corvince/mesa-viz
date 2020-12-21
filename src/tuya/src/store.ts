@@ -1,10 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
 import chartReducer from "./features/charts/chartReducer";
-import modelReducer from "./features/model/modelReducer";
+import controllerReducer from "./features/controller/controllerReducer";
+import modelStatesReducer from "./features/modelStates/modelStatesReducer";
 
 const store = configureStore({
   reducer: {
-    model: modelReducer,
+    controller: controllerReducer,
+    modelStates: modelStatesReducer,
     chart: chartReducer,
   },
 });

@@ -66,7 +66,7 @@ def as_json(model: "Model"):
         ]
 
     model_data.update({"agents": agent_data})
-    return json.dumps(model_data, default=lambda a: str(a))
+    return json.loads(json.dumps(model_data, default=lambda a: str(a)))
 
 
 class PageHandler(tornado.web.RequestHandler):
@@ -96,9 +96,11 @@ class ModelRunner:
     def current_state(self, step: int) -> str:
         return tornado.escape.json_encode(
             {
-                "type": "chart/renderData",
-                "payload": [as_json(model) for model in self.models],
-                "step": step,
+                "type": "modelStates/stepReceived",
+                "payload": {
+                    "step": step,
+                    "modelStates": [as_json(model) for model in self.models],
+                },
             }
         )
 
@@ -114,6 +116,14 @@ class ModelRunner:
     async def reset(self) -> None:
         self.reset_models()
         self.states = []
+        self.socket_handler.write_message(
+            {
+                "type": "modelStates/init",
+                "payload": {
+                    "n_sims": self.application.n_simulations,
+                },
+            }
+        )
         self.socket_handler.write_message(
             {"type": "model_params", "params": self.user_params}
         )
@@ -218,11 +228,23 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
 
         self.write_message(
             {
-                "type": "chart/createSpec",
-                "payload": self.application.vega_specifications,
-                "n_sims": self.application.n_simulations,
+                "type": "modelStates/init",
+                "payload": {
+                    "n_sims": self.application.n_simulations,
+                },
             }
         )
+
+        self.write_message(
+            {
+                "type": "chart/createSpec",
+                "payload": {
+                    "specs": self.application.vega_specifications,
+                },
+            }
+        )
+
+        self.write_message(self.model_runner.current_state(0))
         return None
 
     async def on_message(self, message: Union[str, bytes]) -> Optional[Awaitable[None]]:

@@ -8,7 +8,7 @@ const socket_url =
   "/ws";
 
 export function SocketHandler({ children }: any) {
-  useWebSocket(socket_url, {
+  const { sendJsonMessage } = useWebSocket(socket_url, {
     share: true,
     onMessage: (e) => {
       console.log(e);
@@ -17,6 +17,9 @@ export function SocketHandler({ children }: any) {
     },
     retryOnError: true,
   });
+  useEffect(() => {
+    sendJsonMessage({ type: "reset", data: {} });
+  }, []);
   return children;
 }
 

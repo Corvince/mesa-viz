@@ -4,15 +4,12 @@ export const chartSlice = createSlice({
   name: "chart",
   initialState: {
     specs: [],
-    data: [],
+    simulations: 0,
   },
   reducers: {
     createSpec: (state, action) => {
-      state.specs = action.payload[0];
-    },
-    renderData: (state, action) => {
-      console.log(action.payload);
-      state.data = JSON.parse(action.payload[0]);
+      state.specs = action.payload.specs;
+      state.simulations = action.payload.n_sims;
     },
   },
 });

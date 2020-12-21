@@ -12,7 +12,8 @@
   "dependencies": {
     "@giantmachines/redux-websocket": "^1.4.0",
     "@reduxjs/toolkit": "^1.5.0",
-    "hybrids": "^4.2.1",
+    "hybrids": "^4.3.3",
+    "lodash-es": "^4.17.15",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-redux": "^7.2.2",
@@ -20,19 +21,21 @@
     "react-vega": "^7.4.2",
     "redux": "^4.0.5",
     "rmwc": "^6.1.4",
-    "tslib": "^2.0.0",
+    "tslib": "^2.0.3",
     "vega": "^5.17.0",
-    "vega-embed": "^6.9.0",
+    "vega-embed": "^6.14.2",
     "vega-lite": "^4.17.0",
-    "vega-util": "^1.14.1",
+    "vega-util": "^1.16.0",
     "web-vitals": "^0.2.4"
   },
   "devDependencies": {
-    "@babel/core": "^7.0.0",
+    "@babel/core": "^7.12.10",
+    "@types/lodash": "^4.14.165",
+    "@types/lodash-es": "^4.17.4",
     "@types/react-dom": "^17.0.0",
-    "@types/react-redux": "^7.1.11",
+    "@types/react-redux": "^7.1.12",
     "@types/websocket": "^1.0.1",
-    "parcel": "^2.0.0-nightly.442"
+    "parcel": "^2.0.0-nightly.481"
   },
   "description": "",
   "version": "0.1.0",
