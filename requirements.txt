@@ -1,4 +1,4 @@
 dataclasses
-Mesa
 altair
+git+https://github.com/projectmesa/mesa.git@refs/pull/934/merge#egg=Mesa
 -e ./src

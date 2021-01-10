@@ -9,6 +9,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import {
   Button,
   Drawer,
+  DrawerAppContent,
   DrawerContent,
   DrawerHeader,
   DrawerSubtitle,
@@ -36,46 +37,62 @@ import {
   reset,
 } from "./features/modelStates/modelStatesReducer";
 import { VegaCharts } from "./features/charts/VegaCharts";
-import { Root } from "postcss";
+import ModelController from "./features/controller/ModelController";
+import Parameters from "./features/parameters/ParameterInput";
 
 function App() {
-  const ready = useSelector((state: RootState) => state.modelStates.ready);
+  const [open, setOpen] = useState(true);
 
   return (
-    <div>
+    <>
       <SimpleTopAppBar
         fixed
         navigationIcon={true}
+        onNav={() => setOpen(!open)}
         title="Mesa"
         actionItems={[{ icon: "file_download" }]}
       />
       <TopAppBarFixedAdjust />
-      <Drawer dismissible open={false}>
-        <DrawerHeader>
-          <DrawerTitle>DrawerHeader</DrawerTitle>
-          <DrawerSubtitle>Subtitle</DrawerSubtitle>
-        </DrawerHeader>
-        <DrawerContent>
-          <List>
-            <ListItem>Cookies</ListItem>
-            <ListItem>Pizza</ListItem>
-            <ListItem>Icecream</ListItem>
-          </List>
-        </DrawerContent>
-      </Drawer>
+      <ParameterDrawer open={open} />
+      <Main />
+      <ModelController />
+    </>
+  );
+}
+
+const Main = React.memo(() => {
+  return (
+    <DrawerAppContent>
       <Grid>
-        <GridCell span={4}>
-          <ModelController />
-        </GridCell>
-        <GridCell span={4}>{ready && <VegaCharts />}</GridCell>
+        <VegaCharts />
       </Grid>
-    </div>
+    </DrawerAppContent>
+  );
+});
+
+export function ParameterDrawer({ open }: { open: boolean }) {
+  return (
+    <Drawer dismissible open={open}>
+      <DrawerHeader>
+        <DrawerTitle>DrawerHeader</DrawerTitle>
+        <DrawerSubtitle>Subtitle</DrawerSubtitle>
+      </DrawerHeader>
+      <DrawerContent>
+        <List>
+          <ListItem>Cookies</ListItem>
+          <ListItem>Pizza</ListItem>
+          <ListItem>Icecream</ListItem>
+        </List>
+        <ModelControllerTest />
+        <Parameters />
+      </DrawerContent>
+    </Drawer>
   );
 }
 
 export default App;
 
-function ModelController() {
+function ModelControllerTest() {
   const { sendJsonMessage } = useMySocket();
   const step = useSelector((state: RootState) => state.modelStates.currentStep);
   const dispatch = useDispatch();
@@ -99,55 +116,4 @@ function ModelController() {
       </Button>
     </div>
   );
-}
-
-const mypatch = [
-  {
-    path: "/signals",
-    op: "add",
-    value: [
-      {
-        name: "get_datum",
-        on: [
-          {
-            events: "click",
-            update: "datum",
-          },
-        ],
-      },
-      {
-        name: "get_key",
-        on: [
-          {
-            events: "keydown",
-            update: "event.key",
-          },
-        ],
-      },
-    ],
-  },
-];
-
-const handleClick = (log, b) => console.log(b);
-
-function VegaView() {
-  const specs = useSelector((state: RootState) => state.chart.specs);
-  const data = useSelector(selectStep(1));
-  let thisdata = JSON.parse(JSON.stringify(Object.assign({}, data)));
-
-  if (data) {
-    let { agents, ...model } = thisdata.modelState[0];
-
-    let mydata = { agents: agents };
-    console.log(mydata);
-    return (
-      <Vega
-        spec={specs[0]}
-        data={mydata}
-        patch={mypatch}
-        signalListeners={{ get_datum: handleClick }}
-      />
-    );
-  }
-  return <div>nothing to see</div>;
 }

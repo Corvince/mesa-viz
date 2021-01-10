@@ -16,7 +16,7 @@ underlying visualization data to your "on-click" function.
 """
 import asyncio
 import copy
-import sys
+import platform
 import json
 import os
 import pickle
@@ -36,7 +36,7 @@ from .VegaSpec import VegaChart
 if TYPE_CHECKING:
     from mesa.model import Model
 
-if sys.platform == "win32":
+if platform.system() == "Windows" and platform.python_version_tuple() >= ("3", "7"):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
@@ -99,7 +99,7 @@ class ModelRunner:
                 "type": "modelStates/stepReceived",
                 "payload": {
                     "step": step,
-                    "modelStates": [as_json(model) for model in self.models],
+                    "modelStates": [{"modelId": id(model), "state": as_json(model)} for model in self.models],
                 },
             }
         )
@@ -125,7 +125,7 @@ class ModelRunner:
             }
         )
         self.socket_handler.write_message(
-            {"type": "model_params", "params": self.user_params}
+            {"type": "parameter/init", "payload": self.user_params}
         )
         self.current_step = 0
         await self.step(0)

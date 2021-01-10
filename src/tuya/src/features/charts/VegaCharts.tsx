@@ -1,33 +1,57 @@
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { Vega, VegaLite } from "react-vega";
+import { Vega } from "react-vega";
 import { RootState } from "../../store";
-import { ModelData, selectStep } from "../modelStates/modelStatesReducer";
+import { selectStep } from "../modelStates/modelStatesReducer";
 import { cloneDeep } from "lodash-es";
-
-function useMesaData(step: number) {
-  const stepData = cloneDeep(useSelector(selectStep(step)));
-  if (stepData) {
-    const data = stepData.agentData;
-    return undefined;
-  }
-}
+import { GridCell, Typography } from "rmwc";
+import "@rmwc/grid/styles";
+import "@rmwc/typography/styles";
 
 export function VegaCharts() {
   const step = useSelector((state: RootState) => state.modelStates.currentStep);
   const specs = useSelector((state: RootState) => state.chart.specs);
-  const stepData = useSelector(selectStep(0, step));
-  const mydata = cloneDeep(stepData?.agentData);
+  const stepData = useSelector(selectStep(step));
+  const models = cloneDeep(stepData?.data);
 
   if (stepData) {
-    return <Vega spec={specs[0]} data={mydata} />;
+    const charts = models.map((model: any, idx) => (
+      <GridCell key={model.modelId} span={4}>
+        <Typography
+          use="headline6"
+          style={{ display: "grid", justifyContent: "center" }}
+        >
+          Model {idx + 1}
+        </Typography>
+        {specs.map((spec, idx) => (
+          <Vega
+            key={idx}
+            spec={spec}
+            data={model.data}
+            patch={mypatch}
+            signalListeners={{ get_datum: handleClick }}
+          />
+        ))}
+      </GridCell>
+    ));
+    console.log(charts);
+    return <>{charts}</>;
   }
   console.log("now");
 
   return <div>nothing</div>;
 }
 
-const mypatch = [
+const oldpatch = [
+  {
+    path: "/data/",
+    op: "add",
+    value: [
+      {
+        name: "model",
+      },
+    ],
+  },
   {
     path: "/signals",
     op: "add",
@@ -54,14 +78,33 @@ const mypatch = [
   },
 ];
 
+function mypatch(spec: object) {
+  if (spec) {
+    //@ts-ignore
+    spec.signals = [
+      {
+        name: "get_datum",
+        on: [
+          {
+            events: "click",
+            update: "datum",
+          },
+        ],
+      },
+    ]; //@ts-ignore
+    spec.data = [{ name: "agents" }, { name: "model" }, { name: "data_0" }];
+  }
+  return spec;
+}
+
 const handleClick = (log, b) => console.log(b);
 
 function VegaItem({ agents, model, spec }: any) {
   let myagent = { ...agents };
-  let myspec = { ...spec };
+  let myspec = cloneDeep({ ...spec });
   console.log(myagent);
   return (
-    <VegaLite
+    <Vega
       spec={myspec}
       data={myagent}
       patch={mypatch}

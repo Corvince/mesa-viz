@@ -1,9 +1,9 @@
 from mesa_viz.VegaVisualization import VegaServer
 from mesa_viz.UserParam import UserSettableParameter
-
+import json
 from model import Schelling
 
-grid_spec = """
+grid_spec = json.loads("""
 {
     "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
     "width": 250,
@@ -16,9 +16,9 @@ grid_spec = """
       "color": {"type": "nominal", "field": "agent_type"}
     }
 }
-"""
+""")
 
-line_spec = """
+line_spec = json.loads("""
 {
     "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
     "width": 250,
@@ -30,7 +30,7 @@ line_spec = """
       "x": {"type": "quantitative", "field": "step"}
     }
 }
-"""
+""")
 
 
 model_params = {

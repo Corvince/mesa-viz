@@ -5,71 +5,53 @@ import {
 } from "@reduxjs/toolkit";
 import { RootState } from "../../store";
 
-export type ModelData = { model: { running: boolean } };
-
-export type AgentData = { agents: object[] };
-
-export type Model = {
-  id: number;
-  parameters: object[];
-  steps: typeof modelStates[];
+export type RawMesaData = {
+  running: boolean;
+  agents: [{ unique_id: number | string }];
 };
 
-export type ModelState = {
+export type VegaData = {
+  model: { running: boolean };
+  agents: [{ unique_id: number | string }];
+};
+
+export type ModelStates = {
   step: number;
-  modelData: { model: object };
-  agentData: { agents: object[] };
+  data: { modelId: number; data: VegaData }[];
 };
 
-const modelStates = createEntityAdapter<ModelState>({
+const modelStates = createEntityAdapter<ModelStates>({
   selectId: (step) => step.step,
 });
 
-interface ModelStateAction {
+interface ModelStatesAction {
   type: string;
   payload: {
     step: number;
-    modelStates: [{ agents: object[]; running: boolean }];
+    modelStates: [{ modelId: number; state: RawMesaData }];
   };
 }
 
 export const modelStatesSlice = createSlice({
   name: "modelStates",
-  initialState: {
-    currentStep: -1,
-    maxStep: -1,
-    models: [],
-    ready: false,
-  },
+  initialState: modelStates.getInitialState({ currentStep: 0, maxStep: 0 }),
   reducers: {
-    init: (state, action) => {
-      state.models = [];
-      for (let i = 0; i < action.payload.n_sims; i++) {
-        state.models.push(modelStates.getInitialState());
-      }
-      state.currentStep = -1;
-      state.maxStep = -1;
-      state.ready = true;
-    },
-    stepReceived: (state, action: ModelStateAction) => {
-      const step = action.payload.step;
-      action.payload.modelStates.map((modelState, idx) => {
-        const { agents, ...model } = modelState;
-        const entity = {
-          step: step,
-          modelData: { model: model },
-          agentData: { agents: agents },
-        };
-        modelStates.addOne(state.models[idx], entity);
+    stepReceived(state, action: ModelStatesAction) {
+      const modelsData = action.payload.modelStates.map((modelState) => {
+        const { agents, ...model } = modelState.state;
+        const data = { agents: agents, model: model };
+        return { modelId: modelState.modelId, data: data };
       });
-      state.currentStep = step;
-      state.maxStep = step;
+      const entity = { step: action.payload.step, data: modelsData };
+      modelStates.addOne(state, entity);
+      state.currentStep = entity.step;
+      state.maxStep = entity.step;
     },
-    displayStep: (state, action) => {
+    reset(state) {
+      state = modelStates.getInitialState({ currentStep: 0, maxStep: 0 });
+    },
+    displayStep(state, action) {
       state.currentStep = action.payload;
-    },
-    reset: (state) => {
-      state.currentStep = 0;
     },
   },
 });
@@ -77,14 +59,10 @@ export const modelStatesSlice = createSlice({
 export const { stepReceived, displayStep, reset } = modelStatesSlice.actions;
 
 export const modelStatesSelectors = modelStates.getSelectors<RootState>(
-  (state) => state.modelStates.models[0]
+  (state) => state.modelStates
 );
 
-export const selectStep = (modelId: number, step: number) => (
-  state: RootState
-) =>
-  modelStates
-    .getSelectors((state: RootState) => state.modelStates.models[modelId])
-    .selectById(state, step);
+export const selectStep = (step: number) => (state: RootState) =>
+  modelStates.getSelectors().selectById(state.modelStates, step);
 
 export default modelStatesSlice.reducer;
