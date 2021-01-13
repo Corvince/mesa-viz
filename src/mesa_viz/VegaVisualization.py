@@ -86,7 +86,6 @@ class PageHandler(tornado.web.RequestHandler):
 class ModelRunner:
     current_step = 0
     models: List["Model"] = []
-    states: List[str] = []
 
     def __init__(self, application: "VegaServer", socket_handler: "SocketHandler"):
         self.application = application
@@ -96,8 +95,8 @@ class ModelRunner:
     def current_state(self, step: int) -> str:
         return tornado.escape.json_encode(
             {
-                "type": "chart/renderData",
-                "payload": [as_json(model) for model in self.models],
+                "type": "model_state",
+                "data": [as_json(model) for model in self.models],
                 "step": step,
             }
         )
@@ -218,8 +217,8 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
 
         self.write_message(
             {
-                "type": "chart/createSpec",
-                "payload": self.application.vega_specifications,
+                "type": "vega_specs",
+                "data": self.application.vega_specifications,
                 "n_sims": self.application.n_simulations,
             }
         )

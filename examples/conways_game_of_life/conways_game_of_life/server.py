@@ -1,11 +1,10 @@
 from mesa_viz.VegaVisualization import VegaServer
 from mesa_viz.UserParam import UserSettableParameter
-import json
+
 
 from .model import ConwaysGameOfLife
 
-grid_spec = json.loads(
-    """
+grid_spec = """
 {
     "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
     "width": 500,
@@ -19,7 +18,6 @@ grid_spec = json.loads(
     }
 }
 """
-)
 
 server = VegaServer(
     ConwaysGameOfLife,

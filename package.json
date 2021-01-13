@@ -6,32 +6,22 @@
     "type": "git"
   },
   "scripts": {
-    "start": "parcel watch ./src/tuya/index_template.html --no-content-hash --public-url /src/mesa_viz/ --dist-dir ./src/mesa_viz/",
-    "build": "parcel build ./src/tuya/index_template.html --no-content-hash --public-url /src/mesa_viz/ --dist-dir ./src/mesa_viz/"
+    "dev": "parcel watch ./src/frontend/index_template.html --no-content-hash --public-url /src/mesa_viz/ --dist-dir ./src/mesa_viz/",
+    "build": "parcel build ./src/frontend/index_template.html --no-content-hash --public-url /src/mesa_viz/ --dist-dir ./src/mesa_viz/"
   },
   "dependencies": {
-    "@giantmachines/redux-websocket": "^1.4.0",
-    "@reduxjs/toolkit": "^1.5.0",
+    "@material/dom": "^7.0.0",
+    "@material/mwc-button": "^0.15.0",
+    "@material/mwc-slider": "^0.15.0",
     "hybrids": "^4.2.1",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "react-redux": "^7.2.2",
-    "react-use-websocket": "^2.2.0",
-    "react-vega": "^7.4.2",
-    "redux": "^4.0.5",
-    "rmwc": "^6.1.4",
     "tslib": "^2.0.0",
-    "vega": "^5.17.0",
+    "vega": "^5.13.0",
     "vega-embed": "^6.9.0",
-    "vega-lite": "^4.17.0",
-    "vega-util": "^1.14.1",
-    "web-vitals": "^0.2.4"
+    "vega-lite": "^4.13.1",
+    "vega-util": "^1.14.1"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
-    "@types/react-dom": "^17.0.0",
-    "@types/react-redux": "^7.1.11",
-    "@types/websocket": "^1.0.1",
     "parcel": "^2.0.0-nightly.442"
   },
   "description": "",
