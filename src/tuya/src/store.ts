@@ -11,6 +11,11 @@ const store = configureStore({
     chart: chartReducer,
     parameter: parameterReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      immutableCheck: false,
+      serializableCheck: false,
+    }),
 });
 
 export default store;

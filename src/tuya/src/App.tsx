@@ -41,7 +41,7 @@ import ModelController from "./features/controller/ModelController";
 import Parameters from "./features/parameters/ParameterInput";
 
 function App() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   return (
     <>
@@ -74,16 +74,9 @@ export function ParameterDrawer({ open }: { open: boolean }) {
   return (
     <Drawer dismissible open={open}>
       <DrawerHeader>
-        <DrawerTitle>DrawerHeader</DrawerTitle>
-        <DrawerSubtitle>Subtitle</DrawerSubtitle>
+        <DrawerTitle>Model Parameters</DrawerTitle>
       </DrawerHeader>
       <DrawerContent>
-        <List>
-          <ListItem>Cookies</ListItem>
-          <ListItem>Pizza</ListItem>
-          <ListItem>Icecream</ListItem>
-        </List>
-        <ModelControllerTest />
         <Parameters />
       </DrawerContent>
     </Drawer>
@@ -91,29 +84,3 @@ export function ParameterDrawer({ open }: { open: boolean }) {
 }
 
 export default App;
-
-function ModelControllerTest() {
-  const { sendJsonMessage } = useMySocket();
-  const step = useSelector((state: RootState) => state.modelStates.currentStep);
-  const dispatch = useDispatch();
-
-  return (
-    <div>
-      {step}
-      <Button
-        onClick={() => {
-          sendJsonMessage({ type: "step", data: { step: step + 1 } });
-        }}
-      >
-        +
-      </Button>
-      <input
-        type="text"
-        onChange={(e) => dispatch(displayStep(e.target.value))}
-      />
-      <Button onClick={() => sendJsonMessage({ type: "reset", data: {} })}>
-        Reset
-      </Button>
-    </div>
-  );
-}

@@ -1,6 +1,6 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { Slider, Select } from "rmwc";
+import { Slider, Select, Typography } from "rmwc";
 import { Parameter } from "./parameterReducer";
 import { RootState } from "../../store";
 
@@ -15,9 +15,15 @@ export default function Parameters() {
 }
 
 function InputParameter({ param }: { param: Parameter }) {
+  const title = <Typography use="headline6">{param.name}</Typography>;
   switch (param.param_type) {
     case "slider":
-      return <MesaSlider param={param} />;
+      return (
+        <>
+          {title}
+          <MesaSlider param={param} />
+        </>
+      );
     case "choice":
       return <MesaSelect input={param} />;
     default:

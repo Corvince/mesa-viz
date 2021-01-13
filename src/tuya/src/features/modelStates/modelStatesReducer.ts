@@ -43,12 +43,12 @@ export const modelStatesSlice = createSlice({
         return { modelId: modelState.modelId, data: data };
       });
       const entity = { step: action.payload.step, data: modelsData };
-      modelStates.addOne(state, entity);
+      modelStates.upsertOne(state, entity);
       state.currentStep = entity.step;
       state.maxStep = entity.step;
     },
-    reset(state) {
-      state = modelStates.getInitialState({ currentStep: 0, maxStep: 0 });
+    reset() {
+      return modelStates.getInitialState({ currentStep: 0, maxStep: 0 });
     },
     displayStep(state, action) {
       state.currentStep = action.payload;

@@ -99,7 +99,10 @@ class ModelRunner:
                 "type": "modelStates/stepReceived",
                 "payload": {
                     "step": step,
-                    "modelStates": [{"modelId": id(model), "state": as_json(model)} for model in self.models],
+                    "modelStates": [
+                        {"modelId": id(model), "state": as_json(model)}
+                        for model in self.models
+                    ],
                 },
             }
         )
@@ -116,14 +119,7 @@ class ModelRunner:
     async def reset(self) -> None:
         self.reset_models()
         self.states = []
-        self.socket_handler.write_message(
-            {
-                "type": "modelStates/init",
-                "payload": {
-                    "n_sims": self.application.n_simulations,
-                },
-            }
-        )
+
         self.socket_handler.write_message(
             {"type": "parameter/init", "payload": self.user_params}
         )
@@ -226,14 +222,7 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             print("Socket opened!")
         self.model_runner = ModelRunner(self.application, self)
 
-        self.write_message(
-            {
-                "type": "modelStates/init",
-                "payload": {
-                    "n_sims": self.application.n_simulations,
-                },
-            }
-        )
+        # self.write_message(self.model_runner.current_state(0))
 
         self.write_message(
             {
@@ -244,7 +233,6 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             }
         )
 
-        self.write_message(self.model_runner.current_state(0))
         return None
 
     async def on_message(self, message: Union[str, bytes]) -> Optional[Awaitable[None]]:

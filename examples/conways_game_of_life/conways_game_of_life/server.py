@@ -1,11 +1,14 @@
 from mesa_viz.VegaVisualization import VegaServer
+from mesa_viz.VegaSpec import GridChart
 from mesa_viz.UserParam import UserSettableParameter
 import json
 
 from .model import ConwaysGameOfLife
 
-grid_spec = json.loads(
-    """
+grid_spec = GridChart(color="isAlive")
+
+# grid_spec = json.loads(
+"""
 {
     "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
     "width": 500,
@@ -19,16 +22,18 @@ grid_spec = json.loads(
     }
 }
 """
-)
+
 
 server = VegaServer(
     ConwaysGameOfLife,
     [grid_spec],
     "Game of Life",
-    {
-        "size": UserSettableParameter(
-            "slider", "Size", value=50, min_value=10, max_value=100, step=5
-        )
-    },
-    n_simulations=1,
+    {"size": 25},
+    n_simulations=2,
 )
+
+"""     {
+        "size": UserSettableParameter(
+            "slider", "Size", value=25, min_value=10, max_value=100, step=5
+        )
+    }, """

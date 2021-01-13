@@ -3,9 +3,10 @@ from mesa_viz.UserParam import UserSettableParameter
 import json
 from model import Schelling
 
-grid_spec = json.loads("""
+grid_spec = json.loads(
+    """
 {
-    "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
     "width": 250,
     "height": 250,
     "data": {"name": "agents"},
@@ -16,21 +17,24 @@ grid_spec = json.loads("""
       "color": {"type": "nominal", "field": "agent_type"}
     }
 }
-""")
+"""
+)
 
-line_spec = json.loads("""
+line_spec = json.loads(
+    """
 {
-    "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
     "width": 250,
     "height": 250,
     "data": {"name": "model"},
     "mark": "line",
     "encoding": {
-      "y": {"type": "quantitative", "field": "happy"},
-      "x": {"type": "quantitative", "field": "step"}
+      "y": {"type": "nominal", "field": "happy"},
+      "x": {"type": "nominal", "field": "Step"}
     }
 }
-""")
+"""
+)
 
 
 model_params = {
