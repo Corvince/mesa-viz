@@ -39,6 +39,6 @@ class GridChart(VegaChart):
             width=200, height=200
         )
 
-        spec = chart.to_json()
+        spec = chart.to_dict()
 
         return spec
