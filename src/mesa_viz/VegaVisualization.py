@@ -15,7 +15,6 @@ a "on_click" method in your model class to respond to clicks. Every click passes
 underlying visualization data to your "on-click" function.
 """
 import asyncio
-import copy
 import platform
 import json
 import os
@@ -303,7 +302,7 @@ class VegaServer(tornado.web.Application):
         self.model_params = model_params
 
         self.model_kwargs = []
-        for i in range(n_simulations):
+        for _ in range(n_simulations):
             kwargs = {}
             for param, value in self.model_params.items():
                 if isinstance(value, UserSettableParameter):
