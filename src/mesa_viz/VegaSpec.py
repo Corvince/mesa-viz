@@ -36,7 +36,7 @@ class GridChart(VegaChart):
         )
 
         chart = chart.configure_axis(tickBand="extent", grid=True).properties(
-            width=200, height=200
+            width=300, height=300
         )
 
         spec = chart.to_dict()

@@ -6,36 +6,41 @@
     "type": "git"
   },
   "scripts": {
-    "start": "parcel watch ./src/tuya/index_template.html --no-content-hash --public-url /src/mesa_viz/ --dist-dir ./src/mesa_viz/",
-    "build": "parcel build ./src/tuya/index_template.html --no-content-hash --public-url /src/mesa_viz/ --dist-dir ./src/mesa_viz/"
+    "watch": "parcel watch ./src/tuya/index_template.html --dist-dir ./src/mesa_viz/ --public-url ./src/mesa_viz/",
+    "serve": "parcel serve ./src/tuya/index_template.html --dist-dir ./src/mesa_viz/ --public-url ./src/mesa_viz/",
+    "build": "parcel build ./src/tuya/index_template.html  --dist-dir ./src/mesa_viz/ --public-url ./src/mesa_viz/",
+    "run-example": "python ./examples/schelling_side_by_side/run.py",
+    "start": "concurrently npm:watch npm:run-example"
   },
   "dependencies": {
     "@giantmachines/redux-websocket": "^1.4.0",
     "@reduxjs/toolkit": "^1.5.0",
-    "hybrids": "^4.2.1",
-    "react": "^17.0.1",
+    "@types/lodash-es": "^4.17.4",
+    "@types/lodash": "^4.14.165",
+    "@types/react-dom": "^17.0.0",
+    "@types/react-redux": "^7.1.12",
+    "@types/websocket": "^1.0.1",
+    "concurrently": "^5.3.0",
+    "hybrids": "^4.3.3",
+    "lodash-es": "^4.17.15",
+    "parcel": "^2.0.0-beta.1",
     "react-dom": "^17.0.1",
     "react-redux": "^7.2.2",
     "react-use-websocket": "^2.2.0",
     "react-vega": "^7.4.2",
+    "react": "^17.0.1",
     "redux": "^4.0.5",
     "rmwc": "^6.1.4",
-    "tslib": "^2.0.0",
-    "vega": "^5.17.0",
-    "vega-embed": "^6.9.0",
+    "tslib": "^2.0.3",
+    "vega-embed": "^6.14.2",
     "vega-lite": "^4.17.0",
-    "vega-util": "^1.14.1",
+    "vega-util": "^1.16.0",
+    "vega": "^5.17.0",
     "web-vitals": "^0.2.4"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.0.0",
-    "@types/react-dom": "^17.0.0",
-    "@types/react-redux": "^7.1.11",
-    "@types/websocket": "^1.0.1",
-    "parcel": "^2.0.0-nightly.442"
   },
   "description": "",
   "version": "0.1.0",
   "author": "",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "browserslist": "> 0.2%"
 }

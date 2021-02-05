@@ -1,12 +1,21 @@
 import { configureStore } from "@reduxjs/toolkit";
 import chartReducer from "./features/charts/chartReducer";
-import modelReducer from "./features/model/modelReducer";
+import controllerReducer from "./features/controller/controllerReducer";
+import modelStatesReducer from "./features/modelStates/modelStatesReducer";
+import parameterReducer from "./features/parameters/parameterReducer";
 
 const store = configureStore({
   reducer: {
-    model: modelReducer,
+    controller: controllerReducer,
+    modelStates: modelStatesReducer,
     chart: chartReducer,
+    parameter: parameterReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      immutableCheck: false,
+      serializableCheck: false,
+    }),
 });
 
 export default store;

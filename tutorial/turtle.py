@@ -72,5 +72,5 @@ class TurtleModel(Model):
 grid = GridChart(color="active")
 
 
-server = VegaServer(TurtleModel, [grid], "Turtles", {}, n_simulations=3)
+server = VegaServer(TurtleModel, [grid, grid], "Turtles", {}, n_simulations=3)
 # server.launch()

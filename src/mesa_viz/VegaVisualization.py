@@ -16,7 +16,7 @@ underlying visualization data to your "on-click" function.
 """
 import asyncio
 import copy
-import sys
+import platform
 import json
 import os
 import pickle
@@ -36,7 +36,7 @@ from .VegaSpec import VegaChart
 if TYPE_CHECKING:
     from mesa.model import Model
 
-if sys.platform == "win32":
+if platform.system() == "Windows" and platform.python_version_tuple() >= ("3", "7"):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
@@ -66,7 +66,7 @@ def as_json(model: "Model"):
         ]
 
     model_data.update({"agents": agent_data})
-    return json.dumps(model_data, default=lambda a: str(a))
+    return json.loads(json.dumps(model_data, default=lambda a: str(a)))
 
 
 class PageHandler(tornado.web.RequestHandler):
@@ -96,9 +96,14 @@ class ModelRunner:
     def current_state(self, step: int) -> str:
         return tornado.escape.json_encode(
             {
-                "type": "chart/renderData",
-                "payload": [as_json(model) for model in self.models],
-                "step": step,
+                "type": "modelStates/stepReceived",
+                "payload": {
+                    "step": step,
+                    "modelStates": [
+                        {"modelId": id(model), "state": as_json(model)}
+                        for model in self.models
+                    ],
+                },
             }
         )
 
@@ -114,8 +119,9 @@ class ModelRunner:
     async def reset(self) -> None:
         self.reset_models()
         self.states = []
+
         self.socket_handler.write_message(
-            {"type": "model_params", "params": self.user_params}
+            {"type": "parameter/init", "payload": self.user_params}
         )
         self.current_step = 0
         await self.step(0)
@@ -170,7 +176,7 @@ class ModelRunner:
             if isinstance(val, UserSettableParameter):
                 val.parameter = param
                 val.model_values = [
-                    kwargs[param].value for kwargs in self.application.model_kwargs
+                    kwargs[param] for kwargs in self.application.model_kwargs
                 ]
                 result.append(val.json)
         return result
@@ -216,13 +222,17 @@ class SocketHandler(tornado.websocket.WebSocketHandler):
             print("Socket opened!")
         self.model_runner = ModelRunner(self.application, self)
 
+        # self.write_message(self.model_runner.current_state(0))
+
         self.write_message(
             {
                 "type": "chart/createSpec",
-                "payload": self.application.vega_specifications,
-                "n_sims": self.application.n_simulations,
+                "payload": {
+                    "specs": self.application.vega_specifications,
+                },
             }
         )
+
         return None
 
     async def on_message(self, message: Union[str, bytes]) -> Optional[Awaitable[None]]:
@@ -292,16 +302,22 @@ class VegaServer(tornado.web.Application):
 
         self.model_params = model_params
 
-        self.model_kwargs = [
-            copy.deepcopy(self.model_params) for _ in range(n_simulations)
-        ]
+        self.model_kwargs = []
+        for i in range(n_simulations):
+            kwargs = {}
+            for param, value in self.model_params.items():
+                if isinstance(value, UserSettableParameter):
+                    kwargs[param] = value.value
+                else:
+                    kwargs[param] = value
+            self.model_kwargs.append(kwargs)
 
         # Prep visualization elements:
         self.vega_specifications = []
         for spec in vega_specifications:
             if isinstance(spec, VegaChart):
                 self.vega_specifications.append(
-                    spec.create_spec(model_cls(**model_params))
+                    spec.create_spec(model_cls(**self.model_kwargs[0]))
                 )
             else:
                 self.vega_specifications.append(spec)

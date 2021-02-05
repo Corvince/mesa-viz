@@ -1,7 +1,6 @@
 import "./App.css";
 import React, { useContext, useMemo, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { decrement, increment } from "./features/model/modelReducer";
 
 import useWebSocket, { ReadyState } from "react-use-websocket";
 // import ModelController from "./ModelController";
@@ -10,6 +9,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import {
   Button,
   Drawer,
+  DrawerAppContent,
   DrawerContent,
   DrawerHeader,
   DrawerSubtitle,
@@ -30,76 +30,57 @@ import { RootState } from "./store";
 import { useCallback } from "react";
 import { useMySocket } from "./features/websocket/websocket";
 import { Vega } from "react-vega";
+import {
+  selectStep,
+  modelStatesSelectors,
+  displayStep,
+  reset,
+} from "./features/modelStates/modelStatesReducer";
+import { VegaCharts } from "./features/charts/VegaCharts";
+import ModelController from "./features/controller/ModelController";
+import Parameters from "./features/parameters/ParameterInput";
 
 function App() {
-  // const dispatch = useDispatch();
-  // dispatch(connect("wss://echo.websocket.org"));
+  const [open, setOpen] = useState(false);
 
   return (
-    <div>
+    <>
       <SimpleTopAppBar
         fixed
         navigationIcon={true}
+        onNav={() => setOpen(!open)}
         title="Mesa"
         actionItems={[{ icon: "file_download" }]}
       />
       <TopAppBarFixedAdjust />
-      <Drawer dismissible open={false}>
-        <DrawerHeader>
-          <DrawerTitle>DrawerHeader</DrawerTitle>
-          <DrawerSubtitle>Subtitle</DrawerSubtitle>
-        </DrawerHeader>
-        <DrawerContent>
-          <List>
-            <ListItem>Cookies</ListItem>
-            <ListItem>Pizza</ListItem>
-            <ListItem>Icecream</ListItem>
-          </List>
-        </DrawerContent>
-      </Drawer>
+      <ParameterDrawer open={open} />
+      <Main />
+      <ModelController />
+    </>
+  );
+}
+
+const Main = React.memo(() => {
+  return (
+    <DrawerAppContent>
       <Grid>
-        <GridCell span={4}>
-          <ModelController />
-        </GridCell>
-        <GridCell span={4}>
-          <VegaView />
-        </GridCell>
+        <VegaCharts />
       </Grid>
-    </div>
+    </DrawerAppContent>
+  );
+});
+
+export function ParameterDrawer({ open }: { open: boolean }) {
+  return (
+    <Drawer dismissible open={open}>
+      <DrawerHeader>
+        <DrawerTitle>Model Parameters</DrawerTitle>
+      </DrawerHeader>
+      <DrawerContent>
+        <Parameters />
+      </DrawerContent>
+    </Drawer>
   );
 }
 
 export default App;
-
-function ModelController() {
-  const step = useSelector((state: RootState) => state.model.value);
-  const dispatch = useDispatch();
-  const { sendJsonMessage } = useMySocket();
-
-  return (
-    <div>
-      {step}
-      <Button
-        onClick={() => {
-          dispatch(increment());
-          sendJsonMessage({ type: "step", data: { step: step + 1 } });
-        }}
-      >
-        +
-      </Button>
-      <Button onClick={() => dispatch(decrement())}>-</Button>
-    </div>
-  );
-}
-
-function VegaView() {
-  const specs = useSelector((state: RootState) => state.chart.specs);
-  const data = useSelector((state: RootState) => state.chart.data);
-
-  const mydata = { agents: { ...data.agents } };
-
-  if (specs && data) {
-    return <Vega spec={specs} data={mydata} />;
-  }
-  return <div>nothing to see</div>;
-}
