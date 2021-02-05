@@ -18,8 +18,7 @@ const parameterSlice = createSlice({
   initialState: [],
   reducers: {
     init: (state, action) => {
-      console.log(action);
-      return state.concat(action.payload);
+      return action.payload;
     },
   },
 });
