@@ -39,7 +39,7 @@ export function VegaCharts() {
             <Vega
               key={idx}
               spec={spec}
-              data={model.data}
+              data={{ agents: model.agents, model: model.model }}
               patch={specPatch}
               signalListeners={{ get_datum: handleClick }}
             />

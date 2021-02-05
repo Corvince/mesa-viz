@@ -176,7 +176,7 @@ class ModelRunner:
             if isinstance(val, UserSettableParameter):
                 val.parameter = param
                 val.model_values = [
-                    kwargs[param].value for kwargs in self.application.model_kwargs
+                    kwargs[param] for kwargs in self.application.model_kwargs
                 ]
                 result.append(val.json)
         return result
@@ -302,16 +302,22 @@ class VegaServer(tornado.web.Application):
 
         self.model_params = model_params
 
-        self.model_kwargs = [
-            copy.deepcopy(self.model_params) for _ in range(n_simulations)
-        ]
+        self.model_kwargs = []
+        for i in range(n_simulations):
+            kwargs = {}
+            for param, value in self.model_params.items():
+                if isinstance(value, UserSettableParameter):
+                    kwargs[param] = value.value
+                else:
+                    kwargs[param] = value
+            self.model_kwargs.append(kwargs)
 
         # Prep visualization elements:
         self.vega_specifications = []
         for spec in vega_specifications:
             if isinstance(spec, VegaChart):
                 self.vega_specifications.append(
-                    spec.create_spec(model_cls(**model_params))
+                    spec.create_spec(model_cls(**self.model_kwargs[0]))
                 )
             else:
                 self.vega_specifications.append(spec)

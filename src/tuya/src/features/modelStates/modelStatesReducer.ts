@@ -3,6 +3,7 @@ import {
   createEntityAdapter,
   createSelector,
 } from "@reduxjs/toolkit";
+import { cloneDeep } from "lodash";
 import { RootState } from "../../store";
 
 export type RawMesaData = {
@@ -17,7 +18,11 @@ export type VegaData = {
 
 export type ModelStates = {
   step: number;
-  data: { modelId: number; data: VegaData }[];
+  data: {
+    modelId: number;
+    agents: [{ unique_id: number | string }];
+    model: any;
+  }[];
 };
 
 const modelStates = createEntityAdapter<ModelStates>({
@@ -37,10 +42,29 @@ export const modelStatesSlice = createSlice({
   initialState: modelStates.getInitialState({ currentStep: 0, maxStep: 0 }),
   reducers: {
     stepReceived(state, action: ModelStatesAction) {
-      const modelsData = action.payload.modelStates.map((modelState) => {
+      const modelsData = action.payload.modelStates.map((modelState, idx) => {
         const { agents, ...model } = modelState.state;
-        const data = { agents: agents, model: model };
-        return { modelId: modelState.modelId, data: data };
+        let lastValues = modelStates
+          .getSelectors()
+          .selectById(state, action.payload.step - 1)?.data[idx]?.model;
+        console.log(lastValues);
+        if (lastValues === undefined) {
+          lastValues = {};
+          const test = {};
+          for (const key of Object.keys(model)) {
+            lastValues[key] = [];
+          }
+        }
+        const newValues = cloneDeep(lastValues);
+        for (const [key, value] of Object.entries(model)) {
+          newValues[key].push(value);
+        }
+        console.log(newValues);
+        return {
+          modelId: modelState.modelId,
+          agents: agents,
+          model: newValues,
+        };
       });
       const entity = { step: action.payload.step, data: modelsData };
       modelStates.upsertOne(state, entity);

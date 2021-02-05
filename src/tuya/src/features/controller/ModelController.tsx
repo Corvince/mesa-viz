@@ -9,8 +9,6 @@ import { useMySocket } from "../websocket/websocket";
 import { displayStep } from "../modelStates/modelStatesReducer";
 
 export default function ModelController() {
-  const [running, setRunning] = useState(false);
-
   const maxStep = useSelector((state: RootState) => state.modelStates.maxStep);
   const currentStep = useSelector(
     (state: RootState) => state.modelStates.currentStep
@@ -25,12 +23,6 @@ export default function ModelController() {
       dispatch(displayStep(currentStep + 1));
     }
   }
-
-  useEffect(() => {
-    if (running) {
-      nextStep();
-    }
-  }, [running, currentStep]);
 
   return (
     <div

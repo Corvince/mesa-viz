@@ -1,24 +1,10 @@
 from mesa_viz.VegaVisualization import VegaServer
+from mesa_viz.VegaSpec import GridChart
 from mesa_viz.UserParam import UserSettableParameter
 import json
 from model import Schelling
 
-grid_spec = json.loads(
-    """
-{
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
-    "width": 250,
-    "height": 250,
-    "data": {"name": "agents"},
-    "mark": "bar",
-    "encoding": {
-      "x": {"type": "nominal", "field": "x"},
-      "y": {"type": "nominal", "field": "y"},
-      "color": {"type": "nominal", "field": "agent_type"}
-    }
-}
-"""
-)
+grid_spec = GridChart(color="agent_type")
 
 line_spec = json.loads(
     """
