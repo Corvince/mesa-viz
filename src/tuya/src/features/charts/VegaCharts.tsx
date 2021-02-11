@@ -11,13 +11,18 @@ import { useMySocket } from "../websocket/websocket";
 
 export function VegaCharts() {
   const { sendJsonMessage } = useMySocket();
-  const step = useSelector((state: RootState) => state.modelStates.currentStep);
+  const currentStep = useSelector(
+    (state: RootState) => state.modelStates.currentStep
+  );
+  const maxStep = useSelector((state: RootState) => state.modelStates.maxStep);
   const specs = useSelector((state: RootState) => state.chart.specs);
-  const stepData = useSelector(selectStep(step));
-  const models = cloneDeep(stepData?.data);
+  const currentStepData = useSelector(selectStep(currentStep));
+  const currentData = cloneDeep(currentStepData?.data);
+  const maxStepData = useSelector(selectStep(maxStep));
+  const maxData = cloneDeep(maxStepData?.data);
 
-  if (models) {
-    const charts = models.map((model: any, idx) => {
+  if (currentData && maxData) {
+    const charts = currentData.map((model: any, idx) => {
       const handleClick = (_name: string, data: object | unknown) =>
         sendJsonMessage({
           type: "call_method",
@@ -39,7 +44,7 @@ export function VegaCharts() {
             <Vega
               key={idx}
               spec={spec}
-              data={{ agents: model.agents, model: model.model }}
+              data={{ agents: model.agents, model: maxData[idx].model }}
               patch={specPatch}
               signalListeners={{ get_datum: handleClick }}
             />
